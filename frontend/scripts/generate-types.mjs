@@ -21,7 +21,8 @@ async function writeOrCheck(relativePath, content) {
     } catch {
       // The comparison below reports a missing generated file.
     }
-    if (current !== content) {
+    // Git may check out generated files with CRLF on Windows.
+    if (current.replace(/\r\n/g, "\n") !== content.replace(/\r\n/g, "\n")) {
       throw new Error(`${relativePath} is stale. Run npm run types:generate in frontend/`);
     }
     return;
