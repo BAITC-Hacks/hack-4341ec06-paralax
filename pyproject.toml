@@ -9,9 +9,10 @@ requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.110,<1",
   "jsonschema>=4.20,<5",
-  "openai>=1.0",
+  "openai>=1.68",
   "openpyxl>=3.1,<4",
   "pandas>=2.2,<4",
+  "numpy>=1.26,<2.4",
 ]
 
 [project.optional-dependencies]
@@ -19,10 +20,12 @@ dev = [
   "mypy>=1.10,<2",
   "pytest>=8,<10",
   "ruff>=0.9,<1",
+  "types-jsonschema>=4.20",
+  "types-openpyxl>=3.1",
 ]
 
-[tool.setuptools]
-packages = ["backend"]
+[tool.setuptools.packages.find]
+include = ["backend*"]
 
 [tool.ruff]
 line-length = 100

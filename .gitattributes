@@ -1,0 +1,2 @@
+# Prettier and generated-type checks compare LF text on Windows as well as CI.
+frontend/src/** text eol=lf
