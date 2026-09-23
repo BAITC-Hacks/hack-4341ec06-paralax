@@ -12,7 +12,7 @@ from unittest.mock import Mock
 import pytest
 from jsonschema import ValidationError
 
-from backend.ai import DEFAULT_MODEL, explain
+from backend.ai import DEFAULT_MODEL, explain, required_evidence
 from backend.evaluation import evaluate
 from backend.forecast import month_days, next_month, predict, select_model
 from backend.importers.iek import FILES, MONTHS, import_iek
@@ -219,12 +219,12 @@ def test_openai_structured_output_is_grounded_and_private():
     client = ai_client(valid_ai())
     result = explain(row, data_source="synthetic", model="test-model", client=client)
     assert result["fallback"] is False
-    assert result["evidence_keys"] == valid_ai()["evidence_keys"]
+    assert set(required_evidence(row)) <= set(result["evidence_keys"])
     assert row == original
     request = client.responses.create.call_args.kwargs
     assert request["store"] is False
     assert request["text"]["format"]["strict"] is True
-    assert set(json.loads(request["input"])) == {"factors"}
+    assert set(json.loads(request["input"])) == {"factors", "context"}
     assert "sku" not in request["input"] and "stock_source" not in request["input"]
 
 
