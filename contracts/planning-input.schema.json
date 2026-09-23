@@ -31,6 +31,26 @@
     "stockout_signals": {
       "type": "array",
       "items": {"$ref": "#/$defs/stockout_signal"}
+    },
+    "schema_version": {"const": "0.2.0"},
+    "safety_stock_days": {"type": "integer", "minimum": 0},
+    "history_start_date": {"type": "string", "format": "date"},
+    "history_end_date": {"type": "string", "format": "date"},
+    "source_files": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "assumptions": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "monthly_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sku", "month", "quantity", "opening_stock"],
+        "properties": {
+          "sku": {"type": "string", "minLength": 1},
+          "month": {"type": "string", "format": "date"},
+          "quantity": {"type": ["number", "null"], "minimum": 0},
+          "opening_stock": {"type": ["number", "null"], "minimum": 0}
+        }
+      }
     }
   },
   "$defs": {
@@ -57,7 +77,24 @@
         "goods_in_transit": {"type": "integer", "minimum": 0},
         "growth_forecast_pct": {"type": "number", "minimum": -100},
         "stock_as_of_date": {"type": "string", "format": "date"},
-        "stock_source": {"type": "string", "minLength": 1}
+        "stock_source": {"type": "string", "minLength": 1},
+        "unit": {"type": "string", "minLength": 1},
+        "stock_scope": {"type": "string", "minLength": 1},
+        "order_multiple": {"type": "integer", "minimum": 1},
+        "minimum_order_quantity": {"type": "integer", "minimum": 0},
+        "quality_warnings": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "shipments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["quantity", "expected_date"],
+            "properties": {
+              "quantity": {"type": "integer", "minimum": 0},
+              "expected_date": {"type": "string", "format": "date"}
+            }
+          }
+        }
       }
     },
     "sale": {
@@ -69,7 +106,9 @@
         "sku": {"type": "string", "minLength": 1},
         "quantity": {"type": "integer", "minimum": 1},
         "document_id": {"type": "string", "minLength": 1},
-        "unit_price_kzt": {"type": "number", "minimum": 0}
+        "unit_price_kzt": {"type": "number", "minimum": 0},
+        "warehouse_id": {"type": "string", "minLength": 1},
+        "unit": {"type": "string", "minLength": 1}
       }
     },
     "stockout": {
@@ -79,7 +118,8 @@
       "properties": {
         "sku": {"type": "string", "minLength": 1},
         "start_date": {"type": "string", "format": "date"},
-        "end_date": {"type": "string", "format": "date"}
+        "end_date": {"type": "string", "format": "date"},
+        "certainty": {"enum": ["confirmed", "suspected"]}
       }
     },
     "stockout_signal": {

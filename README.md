@@ -3,13 +3,13 @@ Hackathon team repository for Paralax
 
 # HackAlem AI — Автоматизация формирования заказов поставщикам
 
-> Статус: логистический трек выбран командой, каркас backend/API готов. Правила прогноза и охват складов ещё требуют подтверждения. Текущие границы MVP зафиксированы в [спецификации](docs/spec.md).
+> Статус: backend/API и расчёт IEK объединены. Срок поставки и страховой запас остаются сценарными параметрами, охват складов требует подтверждения. Текущие границы MVP зафиксированы в [спецификации](docs/spec.md).
 >
 > Для начала работы: [правила команды](AGENTS.md) · [задачи и владельцы](docs/tasks.md) · [контракты](contracts/README.md) · [тестовые сценарии](fixtures/scenarios.md).
 
 ## Быстрый старт команды
 
-Полное ТЗ с видом экрана, API, распределением на троих и почасовыми этапами: [docs/spec.md](docs/spec.md). Индивидуальные задачи с проверяемым результатом: [docs/tasks.md](docs/tasks.md). HTTP API и проверки готовы; импорт Excel, расчёт, OpenAI и рабочий UI ещё разрабатываются участниками.
+Полное ТЗ с видом экрана, API, распределением на троих и почасовыми этапами: [docs/spec.md](docs/spec.md). Индивидуальные задачи с проверяемым результатом: [docs/tasks.md](docs/tasks.md). Импорт IEK, расчёт и HTTP API готовы; подключение AI к HTTP и рабочий UI остаются отдельными задачами.
 
 ```powershell
 python -m venv .venv
@@ -20,11 +20,18 @@ cd ..
 .\.venv\Scripts\python.exe scripts/check.py
 ```
 
-На Linux/macOS используйте `.venv/bin/python` вместо `.venv\Scripts\python.exe`. `check` запускает Python format/lint/typecheck/pytest и frontend format/lint/typecheck/test/build. Пять приёмочных тестов помечены `xfail` до появления расчётного модуля; их нельзя считать реализованными функциями. После появления функции снимайте метку с соответствующего теста и добивайтесь зелёного результата. GitHub Actions выполняет те же проверки для push/PR.
+На Linux/macOS используйте `.venv/bin/python` вместо `.venv\Scripts\python.exe`. `check` запускает Python format/lint/typecheck/pytest и frontend format/lint/typecheck/test/build. Приёмочные тесты расчёта выполняются без `xfail`. GitHub Actions выполняет те же проверки для push/PR.
 
 Для локального просмотра пустого UI-каркаса: `npm run dev --prefix frontend`. Исходные 12 Excel-книг IEK и Systeme Electric находятся в `data/` по указанию команды; `data/private/` и `data/raw/` остаются исключёнными. API-ключ в `.env` на серверной стороне; никогда не вводите его во frontend.
 
-Для запуска backend: `.\.venv\Scripts\python.exe -m uvicorn backend.app:app --reload` (Linux/macOS: `.venv/bin/python -m uvicorn backend.app:app --reload`). Документация маршрутов — `http://127.0.0.1:8000/docs` и [contracts/api.md](contracts/api.md). Синтетический рабочий черновик создаётся через `POST /api/demo/planning-runs`; его можно править, утверждать и экспортировать. Обычный `POST /api/planning-runs` начнёт считать после подключения `backend.planning.plan` участника данных; до этого вернёт `planner_not_ready`.
+Для запуска backend: `.\.venv\Scripts\python.exe -m uvicorn backend.app:app --reload` (Linux/macOS: `.venv/bin/python -m uvicorn backend.app:app --reload`). Документация маршрутов — `http://127.0.0.1:8000/docs` и [contracts/api.md](contracts/api.md). `POST /api/planning-runs` принимает нормализованный JSON и вызывает `backend.planning.plan`; черновик можно править, утверждать и экспортировать. `POST /api/demo/planning-runs` оставлен как статический синтетический мок для UI. Маршрут объяснения пока возвращает резервный текст.
+
+Импорт четырёх книг IEK и локальный расчёт 50 SKU: `.\.venv\Scripts\python.exe -m backend.cli --data-dir data --output outputs/iek-planning-result.json --limit 50`. Затем `outputs/iek-planning-result.input.json` можно отправить в `POST /api/planning-runs`. Подробности и ограничения — в [docs/prediction-run.md](docs/prediction-run.md). Импорт не выполняется при каждом HTTP-запросе.
+
+```powershell
+$payload = Get-Content outputs/iek-planning-result.input.json -Raw -Encoding UTF8
+Invoke-RestMethod -Uri http://127.0.0.1:8000/api/planning-runs -Method Post -ContentType 'application/json; charset=utf-8' -Body $payload
+```
 
 Для разработки интерфейса используйте синтетический [мок результата](fixtures/planning-result.demo.json). Готовый типизированный импорт — `planningDemo` из `frontend/src/mocks/planning-demo.generated.ts`, типы — `frontend/src/types/planning.generated.ts`. Источник типов — JSON Schema в `contracts/`; после её изменения выполните `npm run types:generate` в `frontend/`. Команда `check` проверит, что генерация не устарела и мок соответствует схеме.
 

@@ -93,6 +93,23 @@ def test_real_run_validates_input_and_uses_injected_planner() -> None:
         )
 
 
+def test_http_uses_integrated_planner_and_eligible_transit() -> None:
+    with TestClient(create_app()) as client:
+        assert client.get("/api/health").json()["planner_ready"] is True
+        payload = fixture("planning-input.sample.json")
+        payload["products"][0]["shipments"] = [
+            {"quantity": payload["products"][0]["goods_in_transit"], "expected_date": "2027-01-01"}
+        ]
+        created = client.post("/api/planning-runs", json=payload)
+        assert created.status_code == 201, created.text
+        result = created.json()
+        row = next(item for item in result["recommendations"] if item["sku"] == "CABLE-01")
+        assert row["factors"]["goods_in_transit"] == 0
+        assert row["factors"]["excluded_late_transit"] == payload["products"][0]["goods_in_transit"]
+        assert client.get(f"/api/planning-runs/{result['run_id']}").json() == result
+        assert client.get(f"/api/planning-runs/{result['run_id']}/export").status_code == 200
+
+
 def test_untrusted_ai_output_falls_back_without_changing_order() -> None:
     def untrusted_explainer(row: dict) -> dict:
         return {

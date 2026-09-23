@@ -20,5 +20,6 @@ coverage/
 data/private/
 data/raw/
 uploads/
+outputs/
 *.sqlite
 *.sqlite3

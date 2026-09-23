@@ -15,6 +15,18 @@ export interface PlanningInput {
   sales: Sale[];
   stockouts: Stockout[];
   stockout_signals?: StockoutSignal[];
+  schema_version?: "0.2.0";
+  safety_stock_days?: number;
+  history_start_date?: string;
+  history_end_date?: string;
+  source_files?: string[];
+  assumptions?: string[];
+  monthly_history?: {
+    sku: string;
+    month: string;
+    quantity: number | null;
+    opening_stock: number | null;
+  }[];
 }
 export interface Supplier {
   supplier_id: string;
@@ -31,6 +43,15 @@ export interface Product {
   growth_forecast_pct: number;
   stock_as_of_date?: string;
   stock_source?: string;
+  unit?: string;
+  stock_scope?: string;
+  order_multiple?: number;
+  minimum_order_quantity?: number;
+  quality_warnings?: string[];
+  shipments?: {
+    quantity: number;
+    expected_date: string;
+  }[];
 }
 export interface Sale {
   date: string;
@@ -38,11 +59,14 @@ export interface Sale {
   quantity: number;
   document_id: string;
   unit_price_kzt?: number;
+  warehouse_id?: string;
+  unit?: string;
 }
 export interface Stockout {
   sku: string;
   start_date: string;
   end_date: string;
+  certainty?: "confirmed" | "suspected";
 }
 export interface StockoutSignal {
   sku: string;
@@ -57,6 +81,8 @@ export interface PlanningResult {
   data_source: "synthetic" | "partner_excel";
   status: "draft" | "approved";
   recommendations: Recommendation[];
+  source_files?: string[];
+  assumptions?: string[];
 }
 export interface Recommendation {
   sku: string;
@@ -78,6 +104,16 @@ export interface Recommendation {
     | "short_history"
     | "missing_data"
   )[];
+  diagnostics?: {
+    model: string;
+    validation_mae: number | null;
+    validation_points: number;
+    quality_warnings: string[];
+    unit?: string;
+    candidate_mae?: {
+      [k: string]: number;
+    };
+  };
 }
 export interface Factors {
   regular_daily_demand: number;
@@ -92,4 +128,7 @@ export interface Factors {
   goods_in_transit: number;
   stock_as_of_date?: string;
   stock_source?: string;
+  lead_time_days?: number;
+  excluded_late_transit?: number;
+  anomaly_excess_quantity?: number;
 }

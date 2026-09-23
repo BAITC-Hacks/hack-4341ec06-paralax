@@ -4,58 +4,259 @@
   "title": "PlanningResult",
   "type": "object",
   "additionalProperties": false,
-  "required": ["run_id", "as_of_date", "warehouse_id", "data_source", "status", "recommendations"],
+  "required": [
+    "run_id",
+    "as_of_date",
+    "warehouse_id",
+    "data_source",
+    "status",
+    "recommendations"
+  ],
   "properties": {
-    "run_id": {"type": "string", "minLength": 1},
-    "as_of_date": {"type": "string", "format": "date"},
-    "warehouse_id": {"type": "string", "minLength": 1},
-    "data_source": {"enum": ["synthetic", "partner_excel"]},
-    "status": {"enum": ["draft", "approved"]},
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "as_of_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "warehouse_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "data_source": {
+      "enum": [
+        "synthetic",
+        "partner_excel"
+      ]
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "approved"
+      ]
+    },
     "recommendations": {
       "type": "array",
-      "items": {"$ref": "#/$defs/recommendation"}
+      "items": {
+        "$ref": "#/$defs/recommendation"
+      }
+    },
+    "source_files": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     }
   },
   "$defs": {
     "recommendation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["sku", "name", "category", "supplier_id", "supplier_name", "recommended_quantity", "selected_quantity", "urgency", "factors", "reason", "flags"],
+      "required": [
+        "sku",
+        "name",
+        "category",
+        "supplier_id",
+        "supplier_name",
+        "recommended_quantity",
+        "selected_quantity",
+        "urgency",
+        "factors",
+        "reason",
+        "flags"
+      ],
       "properties": {
-        "sku": {"type": "string", "minLength": 1},
-        "name": {"type": "string", "minLength": 1},
-        "category": {"type": "string", "minLength": 1},
-        "supplier_id": {"type": "string", "minLength": 1},
-        "supplier_name": {"type": "string", "minLength": 1},
-        "recommended_quantity": {"type": "integer", "minimum": 0},
-        "selected_quantity": {"type": "integer", "minimum": 0},
-        "urgency": {"enum": ["critical", "high", "medium", "low"]},
-        "factors": {"$ref": "#/$defs/factors"},
-        "reason": {"type": "string", "minLength": 1},
+        "sku": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "category": {
+          "type": "string",
+          "minLength": 1
+        },
+        "supplier_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "supplier_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recommended_quantity": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "selected_quantity": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "urgency": {
+          "enum": [
+            "critical",
+            "high",
+            "medium",
+            "low"
+          ]
+        },
+        "factors": {
+          "$ref": "#/$defs/factors"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
         "flags": {
           "type": "array",
           "uniqueItems": true,
-          "items": {"enum": ["one_off_sale", "stockout_adjustment", "suspected_stockout", "seasonality", "growth", "short_history", "missing_data"]}
+          "items": {
+            "enum": [
+              "one_off_sale",
+              "stockout_adjustment",
+              "suspected_stockout",
+              "seasonality",
+              "growth",
+              "short_history",
+              "missing_data"
+            ]
+          }
+        },
+        "diagnostics": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "model",
+            "validation_mae",
+            "validation_points",
+            "quality_warnings"
+          ],
+          "properties": {
+            "model": {
+              "type": "string",
+              "minLength": 1
+            },
+            "validation_mae": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "validation_points": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "quality_warnings": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "unit": {
+              "type": "string",
+              "minLength": 1
+            },
+            "candidate_mae": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          }
         }
       }
     },
     "factors": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["regular_daily_demand", "seasonality_multiplier", "trend_multiplier", "external_growth_multiplier", "estimated_lost_demand", "coverage_days", "forecast_during_coverage", "safety_stock", "current_stock", "goods_in_transit"],
+      "required": [
+        "regular_daily_demand",
+        "seasonality_multiplier",
+        "trend_multiplier",
+        "external_growth_multiplier",
+        "estimated_lost_demand",
+        "coverage_days",
+        "forecast_during_coverage",
+        "safety_stock",
+        "current_stock",
+        "goods_in_transit"
+      ],
       "properties": {
-        "regular_daily_demand": {"type": "number", "minimum": 0},
-        "seasonality_multiplier": {"type": "number", "minimum": 0},
-        "trend_multiplier": {"type": "number", "minimum": 0},
-        "external_growth_multiplier": {"type": "number", "minimum": 0},
-        "estimated_lost_demand": {"type": "number", "minimum": 0},
-        "coverage_days": {"type": "integer", "minimum": 1},
-        "forecast_during_coverage": {"type": "number", "minimum": 0},
-        "safety_stock": {"type": "number", "minimum": 0},
-        "current_stock": {"type": "integer", "minimum": 0},
-        "goods_in_transit": {"type": "integer", "minimum": 0},
-        "stock_as_of_date": {"type": "string", "format": "date"},
-        "stock_source": {"type": "string", "minLength": 1}
+        "regular_daily_demand": {
+          "type": "number",
+          "minimum": 0
+        },
+        "seasonality_multiplier": {
+          "type": "number",
+          "minimum": 0
+        },
+        "trend_multiplier": {
+          "type": "number",
+          "minimum": 0
+        },
+        "external_growth_multiplier": {
+          "type": "number",
+          "minimum": 0
+        },
+        "estimated_lost_demand": {
+          "type": "number",
+          "minimum": 0
+        },
+        "coverage_days": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "forecast_during_coverage": {
+          "type": "number",
+          "minimum": 0
+        },
+        "safety_stock": {
+          "type": "number",
+          "minimum": 0
+        },
+        "current_stock": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "goods_in_transit": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "stock_as_of_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "stock_source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lead_time_days": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "excluded_late_transit": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "anomaly_excess_quantity": {
+          "type": "number",
+          "minimum": 0
+        }
       }
     }
   }

@@ -107,9 +107,8 @@ def create_app(
     selected_planner = planner or cast(
         Planner | None, _optional_service("backend.planning", "plan")
     )
-    selected_explainer = explainer or cast(
-        Explainer | None, _optional_service("backend.ai", "explain")
-    )
+    # The data module's explanation has a separate contract and still needs an HTTP adapter.
+    selected_explainer = explainer
     runs = store or RunStore()
     application = FastAPI(title="Paralax Procurement API", version="0.1.0")
     application.add_middleware(

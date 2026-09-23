@@ -1,7 +1,4 @@
-"""Executable planning promises; currently xfail until the planning module exists.
-
-Remove each xfail marker when its feature is implemented. Assertion failures then block CI.
-"""
+"""Executable product promises for the implemented planning/workflow modules."""
 
 from __future__ import annotations
 
@@ -9,14 +6,7 @@ import copy
 import json
 from pathlib import Path
 
-import pytest
-
 INPUT_FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "planning-input.sample.json"
-PENDING = pytest.mark.xfail(
-    raises=ModuleNotFoundError,
-    strict=True,
-    reason="Planning module has not been implemented by the data participant yet",
-)
 
 
 def sample_input() -> dict:
@@ -27,7 +17,6 @@ def row(result: dict, sku: str) -> dict:
     return next(item for item in result["recommendations"] if item["sku"] == sku)
 
 
-@PENDING
 def test_goods_in_transit_cannot_increase_order() -> None:
     from backend.planning import plan
 
@@ -39,7 +28,6 @@ def test_goods_in_transit_cannot_increase_order() -> None:
     assert after["recommended_quantity"] <= before["recommended_quantity"]
 
 
-@PENDING
 def test_one_off_sale_is_flagged_and_does_not_dominate_regular_demand() -> None:
     from backend.planning import plan
 
@@ -56,7 +44,6 @@ def test_one_off_sale_is_flagged_and_does_not_dominate_regular_demand() -> None:
     )
 
 
-@PENDING
 def test_confirmed_stockout_increases_estimated_demand() -> None:
     from backend.planning import plan
 
@@ -71,7 +58,6 @@ def test_confirmed_stockout_increases_estimated_demand() -> None:
     )
 
 
-@PENDING
 def test_two_repeated_high_seasons_raise_high_season_forecast() -> None:
     from backend.planning import plan
 
@@ -85,10 +71,13 @@ def test_two_repeated_high_seasons_raise_high_season_forecast() -> None:
             "sku": "CABLE-01",
             "quantity": 30 if month == 6 else 3,
             "document_id": f"demo-{year}-{month}",
+            "unit_price_kzt": 100,
         }
         for year in (2024, 2025)
         for month in range(1, 13)
     ]
+    fixture["history_start_date"] = "2024-01-01"
+    fixture["history_end_date"] = "2025-12-31"
     high = copy.deepcopy(fixture)
     high["as_of_date"] = "2026-05-20"
     low = copy.deepcopy(fixture)
@@ -99,10 +88,8 @@ def test_two_repeated_high_seasons_raise_high_season_forecast() -> None:
     )
 
 
-@PENDING
 def test_manual_edit_preserves_recommendation_until_explicit_approval() -> None:
     from backend.planning import plan
-
     from backend.workflow import approve, select_quantity
 
     draft = plan(sample_input())

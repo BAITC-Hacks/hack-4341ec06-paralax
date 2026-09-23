@@ -6,11 +6,11 @@ from copy import deepcopy
 from typing import Any
 
 
-class RunStateError(Exception):
+class RunStateError(ValueError):
     """The requested change is not allowed for this run state."""
 
 
-class RecommendationNotFound(Exception):
+class RecommendationNotFound(ValueError):
     """The requested SKU is not part of this run."""
 
 

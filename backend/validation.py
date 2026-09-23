@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import json
-from datetime import date
+import math
+from datetime import date, timedelta
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -12,6 +13,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 
 CONTRACTS = Path(__file__).resolve().parents[1] / "contracts"
 Issue = dict[str, str]
+Json = dict[str, Any]
 
 
 @lru_cache(maxsize=3)
@@ -59,12 +61,25 @@ def validate_planning_input(payload: Any) -> list[Issue]:
             issues.append(
                 {"field": f"products.{index}.stock_as_of_date", "reason": "after as_of_date"}
             )
+        if (
+            "shipments" in product
+            and sum(shipment["quantity"] for shipment in product["shipments"])
+            != product["goods_in_transit"]
+        ):
+            issues.append(
+                {"field": f"products.{index}.shipments", "reason": "transit quantity mismatch"}
+            )
 
+    seen_sales: set[tuple[str, str, str, str | None]] = set()
     for index, sale in enumerate(payload["sales"]):
         if sale["sku"] not in product_skus:
             issues.append({"field": f"sales.{index}.sku", "reason": "unknown SKU"})
         if date.fromisoformat(sale["date"]) > as_of_date:
             issues.append({"field": f"sales.{index}.date", "reason": "after as_of_date"})
+        identity = (sale["sku"], sale["date"], sale["document_id"], sale.get("warehouse_id"))
+        if identity in seen_sales:
+            issues.append({"field": f"sales.{index}", "reason": "duplicate document/SKU/date"})
+        seen_sales.add(identity)
 
     for index, stockout in enumerate(payload["stockouts"]):
         if stockout["sku"] not in product_skus:
@@ -81,6 +96,25 @@ def validate_planning_input(payload: Any) -> list[Issue]:
             issues.append({"field": f"stockout_signals.{index}.sku", "reason": "unknown SKU"})
         if signal["month"] > payload["as_of_date"][:7]:
             issues.append({"field": f"stockout_signals.{index}.month", "reason": "future month"})
+
+    seen_months: set[tuple[str, str]] = set()
+    for index, point in enumerate(payload.get("monthly_history", [])):
+        month = date.fromisoformat(point["month"])
+        key = (point["sku"], point["month"])
+        if point["sku"] not in product_skus or month.day != 1 or month >= as_of_date.replace(day=1):
+            issues.append(
+                {"field": f"monthly_history.{index}.month", "reason": "invalid month or SKU"}
+            )
+        if key in seen_months:
+            issues.append(
+                {"field": f"monthly_history.{index}.month", "reason": "duplicate SKU/month"}
+            )
+        seen_months.add(key)
+
+    if payload.get("history_start_date", "0001") > payload.get("history_end_date", "9999"):
+        issues.append({"field": "history_end_date", "reason": "before history_start_date"})
+    if payload.get("history_end_date", payload["as_of_date"]) > payload["as_of_date"]:
+        issues.append({"field": "history_end_date", "reason": "after as_of_date"})
 
     return issues
 
@@ -100,6 +134,7 @@ def validate_planning_result(payload: Any) -> list[Issue]:
 
 def validate_result_against_input(result: dict[str, Any], payload: dict[str, Any]) -> list[Issue]:
     products = {product["sku"]: product for product in payload["products"]}
+    suppliers = {supplier["supplier_id"]: supplier for supplier in payload["suppliers"]}
     issues: list[Issue] = []
     for index, row in enumerate(result["recommendations"]):
         product = products.get(row["sku"])
@@ -110,7 +145,7 @@ def validate_result_against_input(result: dict[str, Any], payload: dict[str, Any
             issues.append(
                 {"field": f"recommendations.{index}.supplier_id", "reason": "supplier mismatch"}
             )
-        for field in ("current_stock", "goods_in_transit"):
+        for field in ("current_stock",):
             if row["factors"][field] != product[field]:
                 issues.append(
                     {
@@ -118,4 +153,45 @@ def validate_result_against_input(result: dict[str, Any], payload: dict[str, Any
                         "reason": "input mismatch",
                     }
                 )
+        end = date.fromisoformat(payload["as_of_date"]) + timedelta(
+            days=suppliers[product["supplier_id"]]["lead_time_days"] + payload["review_period_days"]
+        )
+        expected_late = sum(
+            shipment["quantity"]
+            for shipment in product.get("shipments", [])
+            if date.fromisoformat(shipment["expected_date"]) > end
+        )
+        expected_eligible = product["goods_in_transit"] - expected_late
+        if (
+            row["factors"]["goods_in_transit"] != expected_eligible
+            or row["factors"].get("excluded_late_transit", 0) != expected_late
+        ):
+            issues.append(
+                {
+                    "field": f"recommendations.{index}.factors.goods_in_transit",
+                    "reason": "input transit mismatch",
+                }
+            )
     return issues
+
+
+def validate_schema(value: Json, name: str) -> None:
+    issues = schema_issues(value, name)
+    if issues:
+        raise ValueError(str(issues))
+    json.dumps(value, allow_nan=False)
+
+
+def validate_input(data: Json) -> None:
+    issues = validate_planning_input(data)
+    if issues:
+        raise ValueError(str(issues))
+    json.dumps(data, allow_nan=False)
+
+
+def integer(value: Any, label: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{label}: expected a numeric quantity, got {value!r}")
+    if not math.isfinite(value) or value < 0 or int(value) != value:
+        raise ValueError(f"{label}: expected a nonnegative integer, got {value!r}")
+    return int(value)
