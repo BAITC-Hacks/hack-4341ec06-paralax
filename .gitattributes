@@ -1,2 +1,3 @@
 *.ts text eol=lf
 *.tsx text eol=lf
+*.py text eol=lf

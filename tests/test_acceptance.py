@@ -1,4 +1,4 @@
-"""Executable product promises; currently xfail only while modules do not exist.
+"""Executable planning promises; currently xfail until the planning module exists.
 
 Remove each xfail marker when its feature is implemented. Assertion failures then block CI.
 """
@@ -15,7 +15,7 @@ INPUT_FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "planning-inp
 PENDING = pytest.mark.xfail(
     raises=ModuleNotFoundError,
     strict=True,
-    reason="Planning/workflow modules have not been implemented by the team yet",
+    reason="Planning module has not been implemented by the data participant yet",
 )
 
 
@@ -102,6 +102,7 @@ def test_two_repeated_high_seasons_raise_high_season_forecast() -> None:
 @PENDING
 def test_manual_edit_preserves_recommendation_until_explicit_approval() -> None:
     from backend.planning import plan
+
     from backend.workflow import approve, select_quantity
 
     draft = plan(sample_input())

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/BAITC-Hacks/hack-4341ec06-paralax/contracts/explanation.schema.json",
+  "title": "RecommendationExplanation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["summary", "drivers", "risk", "review_question", "evidence_keys", "source"],
+  "properties": {
+    "summary": {"type": "string", "minLength": 1},
+    "drivers": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "risk": {"type": "string", "minLength": 1},
+    "review_question": {"type": "string", "minLength": 1},
+    "evidence_keys": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "source": {"enum": ["openai", "fallback"]}
+  }
+}

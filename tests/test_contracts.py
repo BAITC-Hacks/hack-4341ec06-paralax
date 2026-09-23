@@ -8,6 +8,8 @@ from pathlib import Path
 import jsonschema
 import pytest
 
+from backend.explanations import fallback_explanation
+
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACTS = ROOT / "contracts"
 FIXTURES = ROOT / "fixtures"
@@ -17,7 +19,7 @@ def load_json(path: Path) -> dict[str, object]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-@pytest.mark.parametrize("name", ["planning-input", "planning-result"])
+@pytest.mark.parametrize("name", ["planning-input", "planning-result", "explanation"])
 def test_schema_is_valid(name: str) -> None:
     schema = load_json(CONTRACTS / f"{name}.schema.json")
     jsonschema.Draft202012Validator.check_schema(schema)
@@ -59,3 +61,12 @@ def test_input_allows_missing_price_but_requires_document_id() -> None:
     del sales[0]["document_id"]
     with pytest.raises(jsonschema.ValidationError):
         validator.validate(fixture)
+
+
+def test_fallback_explanation_matches_contract() -> None:
+    schema = load_json(CONTRACTS / "explanation.schema.json")
+    result = load_json(FIXTURES / "planning-result.demo.json")
+    recommendations = result["recommendations"]
+    assert isinstance(recommendations, list)
+    explanation = fallback_explanation(recommendations[0])
+    jsonschema.Draft202012Validator(schema).validate(explanation)
