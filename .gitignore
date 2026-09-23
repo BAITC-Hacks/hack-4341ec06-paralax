@@ -23,3 +23,4 @@ uploads/
 outputs/
 *.sqlite
 *.sqlite3
+.analysis/

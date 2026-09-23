@@ -7,6 +7,7 @@ Backend: `backend/app.py`, локальный запуск `python -m uvicorn ba
 - `GET /api/health` → `status`, `planner_ready`, `ai_ready`. `planner_ready` показывает подключение расчёта; `ai_ready` — наличие адаптера AI в HTTP-слое, а не доступность OpenAI API.
 - `GET /api/demo/planning-input` → синтетический вход для отладки.
 - `POST /api/demo/planning-runs` → новый черновик из синтетического `fixtures/planning-result.demo.json`. Числа здесь подготовлены вручную для UI и **не являются ответом алгоритма**.
+- `POST /api/iek/planning-runs` → импорт или чтение подготовленного локального набора IEK (50 SKU), затем тот же расчёт `plan`. Подготовленный файл: `outputs/iek-planning-result.input.json`; если его нет, чтение четырёх книг может занять около минуты. Результат помечен `data_source: "partner_excel"`.
 - `POST /api/planning-runs` принимает `PlanningInput`, проверяет JSON Schema и ссылки между SKU/поставщиками, вызывает `backend.planning.plan(input)` и возвращает `PlanningResult` со статусом `draft`. Модуль расчёта подключён. Ошибки входа — `422`, `detail.errors[]` с полем `field` и причиной `reason`.
 - `GET /api/planning-runs/{run_id}` → сохранённый черновик/утверждённый результат, `404` если ID нет.
 - `PATCH /api/planning-runs/{run_id}/recommendations/{sku}` принимает `{ "selected_quantity": integer >= 0 }`. Меняет только выбранное количество в `draft`; `recommended_quantity` сохраняется. Для утверждённого результата — `409`.

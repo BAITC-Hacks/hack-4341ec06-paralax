@@ -32,7 +32,7 @@ def fallback_explanation(row: dict[str, Any]) -> dict[str, Any]:
             f"Рекомендовано заказать {row['recommended_quantity']} шт. по расчётным факторам."
         ),
         "drivers": [
-            f"Прогноз на горизонт: {forecast} шт.; страховой запас: {safety} шт.",
+            f"Прогноз на горизонт: {forecast:.2f} шт.; страховой запас: {safety:.2f} шт.",
             f"Текущий остаток: {stock} шт.; товар в пути: {transit} шт.",
         ],
         "risk": risk,

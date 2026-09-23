@@ -1,5 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
+import App from "./App";
+import "./styles.css";
 
 const root = document.getElementById("root");
 
@@ -9,9 +11,6 @@ if (!root) {
 
 createRoot(root).render(
   <React.StrictMode>
-    <main>
-      <h1>Черновик рекомендаций для закупок</h1>
-      <p>Интерфейс разрабатывается участником UI.</p>
-    </main>
+    <App />
   </React.StrictMode>,
 );

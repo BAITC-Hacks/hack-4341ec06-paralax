@@ -178,6 +178,24 @@ def create_app(
             raise HTTPException(status_code=500, detail={"code": "invalid_planner_result"})
         return runs.create(fresh)
 
+    @application.post("/api/iek/planning-runs", status_code=201)
+    def create_iek_run() -> dict[str, Any]:
+        """Plan the prepared IEK snapshot, importing workbooks on the first local run."""
+        prepared = ROOT / "outputs" / "iek-planning-result.input.json"
+        try:
+            if prepared.is_file():
+                payload = cast(dict[str, Any], json.loads(prepared.read_text(encoding="utf-8")))
+            else:
+                from backend.importers.iek import import_iek
+
+                payload, _audit = import_iek(ROOT / "data", limit=50)
+        except (OSError, ValueError, json.JSONDecodeError) as error:
+            logger.exception("IEK input preparation failed")
+            raise HTTPException(
+                status_code=422, detail={"code": "iek_input_failed", "reason": str(error)}
+            ) from error
+        return create_run(payload)
+
     @application.get("/api/planning-runs/{run_id}")
     def read_run(run_id: str) -> dict[str, Any]:
         return get_run(run_id)

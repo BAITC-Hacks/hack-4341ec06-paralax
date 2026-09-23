@@ -1,6 +1,8 @@
 # hack-4341ec06-paralax
 Hackathon team repository for Paralax
 
+Рабочий интерфейс менеджера находится в [frontend/](frontend/README.md). Он подключён к локальному FastAPI; запуск и ограничения описаны в инструкции frontend.
+
 # HackAlem AI — Автоматизация формирования заказов поставщикам
 
 > Статус: backend/API и расчёт IEK объединены. Срок поставки и страховой запас остаются сценарными параметрами, охват складов требует подтверждения. Текущие границы MVP зафиксированы в [спецификации](docs/spec.md).
@@ -9,7 +11,7 @@ Hackathon team repository for Paralax
 
 ## Быстрый старт команды
 
-Полное ТЗ с видом экрана, API, распределением на троих и почасовыми этапами: [docs/spec.md](docs/spec.md). Индивидуальные задачи с проверяемым результатом: [docs/tasks.md](docs/tasks.md). Импорт IEK, расчёт и HTTP API готовы; подключение AI к HTTP и рабочий UI остаются отдельными задачами.
+Полное ТЗ с видом экрана, API, распределением на троих и почасовыми этапами: [docs/spec.md](docs/spec.md). Индивидуальные задачи с проверяемым результатом: [docs/tasks.md](docs/tasks.md). Импорт IEK, расчёт, HTTP API и UI объединены; адаптер AI к HTTP остаётся отдельной задачей.
 
 ```powershell
 python -m venv .venv
@@ -22,11 +24,11 @@ cd ..
 
 На Linux/macOS используйте `.venv/bin/python` вместо `.venv\Scripts\python.exe`. `check` запускает Python format/lint/typecheck/pytest и frontend format/lint/typecheck/test/build. Приёмочные тесты расчёта выполняются без `xfail`. GitHub Actions выполняет те же проверки для push/PR.
 
-Для локального просмотра пустого UI-каркаса: `npm run dev --prefix frontend`. Исходные 12 Excel-книг IEK и Systeme Electric находятся в `data/` по указанию команды; `data/private/` и `data/raw/` остаются исключёнными. API-ключ в `.env` на серверной стороне; никогда не вводите его во frontend.
+Для локального просмотра UI запустите backend, затем `npm run dev --prefix frontend` и откройте `http://127.0.0.1:5173`. Исходные 12 Excel-книг IEK и Systeme Electric находятся в `data/` по указанию команды; `data/private/` и `data/raw/` остаются исключёнными. API-ключ в `.env` на серверной стороне; никогда не вводите его во frontend.
 
 Для запуска backend: `.\.venv\Scripts\python.exe -m uvicorn backend.app:app --reload` (Linux/macOS: `.venv/bin/python -m uvicorn backend.app:app --reload`). Документация маршрутов — `http://127.0.0.1:8000/docs` и [contracts/api.md](contracts/api.md). `POST /api/planning-runs` принимает нормализованный JSON и вызывает `backend.planning.plan`; черновик можно править, утверждать и экспортировать. `POST /api/demo/planning-runs` оставлен как статический синтетический мок для UI. Маршрут объяснения пока возвращает резервный текст.
 
-Импорт четырёх книг IEK и локальный расчёт 50 SKU: `.\.venv\Scripts\python.exe -m backend.cli --data-dir data --output outputs/iek-planning-result.json --limit 50`. Затем `outputs/iek-planning-result.input.json` можно отправить в `POST /api/planning-runs`. Подробности и ограничения — в [docs/prediction-run.md](docs/prediction-run.md). Импорт не выполняется при каждом HTTP-запросе.
+Импорт четырёх книг IEK и локальный расчёт 50 SKU: `.\.venv\Scripts\python.exe -m backend.cli --data-dir data --output outputs/iek-planning-result.json --limit 50`. Затем `outputs/iek-planning-result.input.json` можно отправить в `POST /api/planning-runs` или нажать «IEK · Excel → Рассчитать» в UI. Если подготовленного файла нет, backend импортирует книги по запросу. Подробности и ограничения — в [docs/prediction-run.md](docs/prediction-run.md).
 
 ```powershell
 $payload = Get-Content outputs/iek-planning-result.input.json -Raw -Encoding UTF8

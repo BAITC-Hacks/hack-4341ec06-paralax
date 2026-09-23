@@ -11,6 +11,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 from backend.app import create_app
+from backend.explanations import fallback_explanation
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -108,6 +109,29 @@ def test_http_uses_integrated_planner_and_eligible_transit() -> None:
         assert row["factors"]["excluded_late_transit"] == payload["products"][0]["goods_in_transit"]
         assert client.get(f"/api/planning-runs/{result['run_id']}").json() == result
         assert client.get(f"/api/planning-runs/{result['run_id']}/export").status_code == 200
+
+
+def test_iek_route_uses_prepared_normalized_input(tmp_path: Path, monkeypatch) -> None:
+    prepared = tmp_path / "outputs" / "iek-planning-result.input.json"
+    prepared.parent.mkdir()
+    payload = fixture("planning-input.sample.json")
+    payload["data_source"] = "partner_excel"
+    prepared.write_text(json.dumps(payload), encoding="utf-8")
+    monkeypatch.setattr("backend.app.ROOT", tmp_path)
+
+    with TestClient(create_app()) as client:
+        response = client.post("/api/iek/planning-runs")
+        assert response.status_code == 201, response.text
+        assert response.json()["data_source"] == "partner_excel"
+        assert len(response.json()["recommendations"]) == len(payload["products"])
+
+
+def test_fallback_explanation_formats_computed_decimal_values() -> None:
+    row = fixture("planning-result.sample.json")["recommendations"][0]
+    row["factors"]["forecast_during_coverage"] = 0.1 + 0.2
+    explanation = fallback_explanation(row)
+    assert "0.30" in explanation["drivers"][0]
+    assert "000000000000" not in explanation["drivers"][0]
 
 
 def test_untrusted_ai_output_falls_back_without_changing_order() -> None:
