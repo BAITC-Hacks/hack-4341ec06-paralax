@@ -10,6 +10,8 @@ from openai import OpenAI
 
 from backend.validation import Json
 
+DEFAULT_MODEL = "gpt-4.1-mini-2025-04-14"
+
 LABELS = {
     "forecast_during_coverage": "Прогноз спроса на горизонт",
     "safety_stock": "Страховой запас",
@@ -80,7 +82,7 @@ def explain(
 
     if data_source != "synthetic" and not allow_partner_data:
         return fallback("partner_data_not_authorized")
-    selected_model = model or os.getenv("OPENAI_MODEL")
+    selected_model = model or os.getenv("OPENAI_MODEL") or DEFAULT_MODEL
     if not selected_model or client is None and not os.getenv("OPENAI_API_KEY"):
         return fallback("missing_configuration")
     facts = {k: v for k, v in row["factors"].items() if k in LABELS}

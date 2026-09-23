@@ -1,6 +1,6 @@
 # Запуск расчётной части
 
-Работать из корня ветки feat/alikt/prediction. Установка:
+Работать из корня ветки akzhan. Установка:
 
 ```powershell
 python -m venv .venv
@@ -31,12 +31,15 @@ explanation = explain(row, data_source=result["data_source"])
 
 ## OpenAI
 
-Серверная конфигурация: OPENAI_API_KEY и OPENAI_MODEL. Модель явно задаёт команда
-из доступных её API-проекту моделей с поддержкой Structured Outputs.
-Файл .env сам по себе не загружается: установите переменные окружения процесса.
+Серверная конфигурация: OPENAI_API_KEY и OPENAI_MODEL.
+Выбрана [GPT-4.1 mini](https://developers.openai.com/api/docs/models/gpt-4.1-mini),
+фиксированный snapshot `gpt-4.1-mini-2025-04-14`: Responses API, Structured Outputs.
+Модель можно переопределить через OPENAI_MODEL. CLI автоматически читает .env из
+корня репозитория, сохраняя приоритет переменных процесса. При прямом вызове
+explain из другого backend ключ передаётся через окружение вызывающего процесса.
 
 ```powershell
-$env:OPENAI_MODEL = "доступная-в-вашем-проекте-модель"
+$env:OPENAI_MODEL = "gpt-4.1-mini-2025-04-14"
 # OPENAI_API_KEY задаётся только локально, не в Git и не во frontend.
 .venv\Scripts\python -m backend.cli --input fixtures/planning-input.sample.json --output outputs/synthetic-result.json --explain-sku CABLE-01
 ```
@@ -48,8 +51,11 @@ fallback, fallback_reason, model. Модель выбирает значимые
 по умолчанию API-вызов заблокирован; allow_partner_data=True разрешён только
 после отдельного согласования отправки агрегатов. CLI такого флага не предоставляет.
 
-Реальный вызов API в этой сессии не выполнялся. Обвязка проверена имитациями
-успеха, таймаута, невалидного ответа и отказа/незавершённого ответа.
+Реальный вызов Responses API проверен 23.09.2026 на синтетической фикстуре:
+status=completed, fallback=false, модель gpt-4.1-mini-2025-04-14.
+Локальный результат: outputs/openai-live-check.json. Ключ хранится только в
+игнорируемом .env и не включается в коммиты. Обвязка дополнительно проверена
+имитациями таймаута, невалидного ответа и отказа/незавершённого ответа.
 
 ## Проверка и границы
 

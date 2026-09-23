@@ -6,6 +6,8 @@ import argparse
 import json
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 from backend.ai import explain
 from backend.importers.iek import import_iek
 from backend.planning import plan
@@ -20,6 +22,7 @@ def write(path: Path, data: Json) -> None:
 
 
 def main() -> None:
+    load_dotenv(Path(__file__).resolve().parents[1] / ".env", override=False)
     parser = argparse.ArgumentParser(description=__doc__)
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--input", type=Path, help="Normalized JSON")

@@ -12,7 +12,7 @@ from unittest.mock import Mock
 import pytest
 from jsonschema import ValidationError
 
-from backend.ai import explain
+from backend.ai import DEFAULT_MODEL, explain
 from backend.evaluation import evaluate
 from backend.forecast import month_days, next_month, predict, select_model
 from backend.importers.iek import FILES, MONTHS, import_iek
@@ -226,6 +226,14 @@ def test_openai_structured_output_is_grounded_and_private():
     assert request["text"]["format"]["strict"] is True
     assert set(json.loads(request["input"])) == {"factors"}
     assert "sku" not in request["input"] and "stock_source" not in request["input"]
+
+
+def test_default_model_is_used_when_env_override_is_absent(monkeypatch):
+    monkeypatch.delenv("OPENAI_MODEL", raising=False)
+    client = ai_client(valid_ai())
+    result = explain(recommendation(monthly_input()), data_source="synthetic", client=client)
+    assert result["fallback"] is False
+    assert client.responses.create.call_args.kwargs["model"] == DEFAULT_MODEL
 
 
 @pytest.mark.parametrize(

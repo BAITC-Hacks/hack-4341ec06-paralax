@@ -9,7 +9,7 @@ Hackathon team repository for Paralax
 
 ## Быстрый старт команды
 
-Расчётная часть реализована в ветке `feat/alikt/prediction`: [команды запуска](docs/prediction-run.md),
+Расчётная часть реализована в ветке `akzhan`: [команды запуска](docs/prediction-run.md),
 [карта четырёх входных книг IEK](docs/data-map.md), [методы и официальные источники](docs/prediction-design.md).
 Результат — JSON на 50 SKU. OpenAI подключён к объяснениям факторов; числовой
 прогноз воспроизводим и работает без API. Ограничения точности и данных указаны
