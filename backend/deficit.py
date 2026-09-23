@@ -114,6 +114,8 @@ def calculate_deficit(
         "current_stock": stock,
         "goods_in_transit": transit,
         "historical_stock": balance_record.get("historical_stock"),
+        "source_current_stock": balance_record.get("source_current_stock"),
+        "source_goods_in_transit": balance_record.get("source_goods_in_transit"),
         "balance_notes": balance_record.get("notes", []),
         "raw_deficit": raw,
         "deficit": deficit,
@@ -131,7 +133,9 @@ def show(value: object) -> str:
     return html.escape(str(value))
 
 
-def quality_label(value: str | None) -> str:
+def quality_label(value: str | None, basis: str | None = None) -> str:
+    if value == "confirmed_current" and basis == "user_entered_attested":
+        return "Введено пользователем"
     return {
         "confirmed_current": "Подтверждённый снимок",
         "ambiguous_date": "Дата и охват требуют проверки",
@@ -172,6 +176,8 @@ def render_html(result: dict, path: Path) -> None:
     source_details = html.escape(json.dumps({
         "current_stock": stock.get("source_refs", []),
         "goods_in_transit": transit.get("source_refs", []),
+        "replaced_source_current_stock": (result.get("source_current_stock") or {}).get("source_refs", []),
+        "replaced_source_goods_in_transit": (result.get("source_goods_in_transit") or {}).get("source_refs", []),
         "historical_stock": historical.get("source_refs", []) if historical else [],
     }, ensure_ascii=False, indent=2))
     historical_basis = ("на начало месяца" if historical and historical.get("basis") == "beginning_of_month"
@@ -202,9 +208,9 @@ pre{{white-space:pre-wrap;word-break:break-word;background:#f5f7f5;padding:14px}
 <div class="cards"><div class="card">Необходимый запас<b>{show(result['target_stock'])} {unit}</b>
 <small>Этап 4</small></div>
 <div class="card">Текущий остаток<b>{show(stock.get('quantity'))} {unit}</b>
-<small>{quality_label(stock.get('quality'))}</small></div>
+<small>{quality_label(stock.get('quality'), stock.get('basis'))}</small></div>
 <div class="card">Товар в пути<b>{show(transit.get('quantity'))} {unit}</b>
-<small>{quality_label(transit.get('quality'))}</small></div></div>
+<small>{quality_label(transit.get('quality'), transit.get('basis'))}</small></div></div>
 <p><b>{show(result['target_stock'])} − {show(stock.get('quantity'))} −
 {show(transit.get('quantity'))} = {show(result['raw_deficit'])} {unit}</b></p>
 <p>Потребность после отсечения отрицательного значения: <b>{show(result['deficit'])} {unit}</b>.

@@ -167,6 +167,16 @@ class DeficitTests(unittest.TestCase):
         self.assertEqual(result["status"], "calculated")
         self.assertEqual(result["balance_source_commit"], "new-stock-snapshot")
 
+    def test_user_override_retains_replaced_source_evidence(self):
+        balance = balance_record()
+        balance["source_current_stock"] = quantity_record(90, "ambiguous_date", None)
+        balance["source_goods_in_transit"] = quantity_record(120, "ambiguous_date", None)
+
+        result = calculate(target_record(), balance)
+
+        self.assertEqual(result["source_current_stock"]["quantity"], 90)
+        self.assertEqual(result["source_goods_in_transit"]["quantity"], 120)
+
     def test_old_date_is_provisional_even_if_labeled_confirmed(self):
         balance = balance_record()
         balance["current_stock"]["as_of_date"] = "2026-09-01"
