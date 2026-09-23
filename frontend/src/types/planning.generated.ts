@@ -2,6 +2,7 @@
 export interface PlanningInput {
   as_of_date: string;
   warehouse_id: string;
+  data_source: "synthetic" | "partner_excel";
   review_period_days: number;
   /**
    * @minItems 1
@@ -13,6 +14,7 @@ export interface PlanningInput {
   products: [Product, ...Product[]];
   sales: Sale[];
   stockouts: Stockout[];
+  stockout_signals?: StockoutSignal[];
 }
 export interface Supplier {
   supplier_id: string;
@@ -27,18 +29,25 @@ export interface Product {
   current_stock: number;
   goods_in_transit: number;
   growth_forecast_pct: number;
+  stock_as_of_date?: string;
+  stock_source?: string;
 }
 export interface Sale {
   date: string;
   sku: string;
   quantity: number;
-  customer_id: string;
-  unit_price_kzt: number;
+  document_id: string;
+  unit_price_kzt?: number;
 }
 export interface Stockout {
   sku: string;
   start_date: string;
   end_date: string;
+}
+export interface StockoutSignal {
+  sku: string;
+  month: string;
+  source: string;
 }
 
 export interface PlanningResult {

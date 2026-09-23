@@ -47,3 +47,15 @@ def test_input_rejects_negative_stock() -> None:
     products[0]["current_stock"] = -1
     with pytest.raises(jsonschema.ValidationError):
         jsonschema.validate(fixture, schema)
+
+
+def test_input_allows_missing_price_but_requires_document_id() -> None:
+    schema = load_json(CONTRACTS / "planning-input.schema.json")
+    fixture = load_json(FIXTURES / "planning-input.sample.json")
+    validator = jsonschema.Draft202012Validator(schema, format_checker=jsonschema.FormatChecker())
+    validator.validate(fixture)
+    sales = fixture["sales"]
+    assert isinstance(sales, list)
+    del sales[0]["document_id"]
+    with pytest.raises(jsonschema.ValidationError):
+        validator.validate(fixture)

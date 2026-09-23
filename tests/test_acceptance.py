@@ -46,7 +46,7 @@ def test_one_off_sale_is_flagged_and_does_not_dominate_regular_demand() -> None:
     baseline = sample_input()
     without_bulk = copy.deepcopy(baseline)
     without_bulk["sales"] = [
-        sale for sale in baseline["sales"] if sale["customer_id"] != "anon-bulk"
+        sale for sale in baseline["sales"] if sale["document_id"] != "demo-bulk"
     ]
     with_bulk_result = row(plan(baseline), "CABLE-01")
     without_bulk_result = row(plan(without_bulk), "CABLE-01")
@@ -84,8 +84,7 @@ def test_two_repeated_high_seasons_raise_high_season_forecast() -> None:
             "date": f"{year}-{month:02d}-01",
             "sku": "CABLE-01",
             "quantity": 30 if month == 6 else 3,
-            "customer_id": f"anon-{year}-{month}",
-            "unit_price_kzt": 100,
+            "document_id": f"demo-{year}-{month}",
         }
         for year in (2024, 2025)
         for month in range(1, 13)
