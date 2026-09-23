@@ -19,7 +19,6 @@ build/
 coverage/
 data/private/
 data/raw/
-data/
 uploads/
 *.sqlite
 *.sqlite3

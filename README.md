@@ -22,7 +22,7 @@ cd ..
 
 На Linux/macOS используйте `.venv/bin/python` вместо `.venv\Scripts\python.exe`. `check` запускает Python format/lint/typecheck/pytest и frontend format/lint/typecheck/test/build. Пять приёмочных тестов помечены `xfail` до появления расчётного модуля; их нельзя считать реализованными функциями. После появления функции снимайте метку с соответствующего теста и добивайтесь зелёного результата. GitHub Actions выполняет те же проверки для push/PR.
 
-Для локального просмотра пустого UI-каркаса: `npm run dev --prefix frontend`. Реальные Excel лежат только локально в `data/`, эта папка исключена из Git. API-ключ в `.env` на серверной стороне; никогда не вводите его во frontend.
+Для локального просмотра пустого UI-каркаса: `npm run dev --prefix frontend`. Исходные 12 Excel-книг IEK и Systeme Electric находятся в `data/` по указанию команды; `data/private/` и `data/raw/` остаются исключёнными. API-ключ в `.env` на серверной стороне; никогда не вводите его во frontend.
 
 ## О проекте
 
