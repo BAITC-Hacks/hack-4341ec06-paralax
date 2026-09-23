@@ -8,12 +8,14 @@ import importlib.util
 import io
 import json
 import logging
+import os
 from collections.abc import Callable
 from copy import deepcopy
 from pathlib import Path
 from typing import Annotated, Any, cast
 from uuid import uuid4
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
@@ -104,10 +106,10 @@ def create_app(
     store: RunStore | None = None,
 ) -> FastAPI:
     """Create a testable API; absent team modules are discovered on startup."""
+    load_dotenv(ROOT / ".env", override=False)
     selected_planner = planner or cast(
         Planner | None, _optional_service("backend.planning", "plan")
     )
-    # The data module's explanation has a separate contract and still needs an HTTP adapter.
     selected_explainer = explainer
     runs = store or RunStore()
     application = FastAPI(title="Paralax Procurement API", version="0.1.0")
@@ -135,7 +137,7 @@ def create_app(
         return {
             "status": "ok",
             "planner_ready": selected_planner is not None,
-            "ai_ready": selected_explainer is not None,
+            "ai_ready": selected_explainer is not None or bool(os.getenv("OPENAI_API_KEY")),
         }
 
     @application.get("/api/demo/planning-input")
@@ -222,8 +224,20 @@ def create_app(
 
     @application.post("/api/planning-runs/{run_id}/recommendations/{sku}/explanation")
     def explain_row(run_id: str, sku: str) -> dict[str, Any]:
-        row = get_row(get_run(run_id), sku)
-        return explain_recommendation(row, selected_explainer)
+        run = get_run(run_id)
+        row = get_row(run, sku)
+        if selected_explainer is not None:
+            return explain_recommendation(row, selected_explainer)
+        from backend.ai import explain
+
+        result = explain(row, data_source=run["data_source"])
+        return {
+            **{
+                key: result[key]
+                for key in ("summary", "drivers", "risk", "review_question", "evidence_keys")
+            },
+            "source": "fallback" if result["fallback"] else "openai",
+        }
 
     @application.get("/api/planning-runs/{run_id}/export")
     def export_run(run_id: str) -> Response:
