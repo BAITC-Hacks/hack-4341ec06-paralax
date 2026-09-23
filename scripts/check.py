@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import subprocess
 import sys
 from pathlib import Path
@@ -17,7 +18,15 @@ COMMANDS = [
 
 
 def main() -> int:
-    for command in COMMANDS:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--live-openai", action="store_true", help="Also require five real API responses"
+    )
+    args = parser.parse_args()
+    commands = list(COMMANDS)
+    if args.live_openai:
+        commands.append([sys.executable, "-m", "scripts.check_prediction"])
+    for command in commands:
         print(f"\n$ {' '.join(command)}", flush=True)
         result = subprocess.run(command, cwd=ROOT, check=False)
         if result.returncode != 0:

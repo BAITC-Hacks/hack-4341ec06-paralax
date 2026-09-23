@@ -13,6 +13,14 @@ from backend.forecast import Point, month_days, next_month, predict, select_mode
 from backend.validation import Json, validate_input, validate_schema
 
 
+def lost_month(points: list[Point], target: date, days: int) -> float | None:
+    """Estimate censored demand from observed past only, never train on imputation."""
+    past = [(d, v) for d, v in points if d < target and v is not None]
+    comparable = [v for d, v in past if d.month == target.month]
+    values = comparable or [v for _, v in past][-6:]
+    return mean(values) * days if values else None
+
+
 def anomalies(sales: list[Json]) -> tuple[dict[str, float], dict[str, float]]:
     grouped: dict[tuple[str, str], float] = defaultdict(float)
     for s in sales:
@@ -77,6 +85,25 @@ def history(data: Json, sku: str) -> tuple[list[Point], float, float, list[str],
                     warnings.append("Сумма документов не совпала с месячной: аномалия не вычтена.")
             days = month_days(current)
             unavailable = sum(current <= d < next_month(current) for d in confirmed)
+            if unavailable == days:
+                if float(p["quantity"]) > 0:
+                    raise ValueError(
+                        f"{sku}: positive monthly sales during full confirmed stockout"
+                    )
+                estimate = lost_month(adjusted, current, days)
+                if estimate is None:
+                    warnings.append(
+                        "Полный stockout: нет предыстории для оценки упущенного спроса."
+                    )
+                else:
+                    lost += estimate
+                    flags.append("stockout_adjustment")
+                    warnings.append(
+                        "Упущенный спрос при полном stockout оценён по прошлым периодам."
+                    )
+                adjusted.append((current, None))
+                current = next_month(current)
+                continue
             if p["opening_stock"] == 0:
                 flags.append("suspected_stockout")
                 if qty == 0:
@@ -84,13 +111,9 @@ def history(data: Json, sku: str) -> tuple[list[Point], float, float, list[str],
                     warnings.append("Нулевые продажи при нулевом остатке: спрос неизвестен.")
                     current = next_month(current)
                     continue
-            if unavailable == days:
-                adjusted.append((current, None))
-                warnings.append("Полный месяц stockout: спрос неизвестен, ноль не подставлен.")
-            else:
-                rate = qty / (days - unavailable)
-                lost += rate * unavailable
-                adjusted.append((current, rate))
+            rate = qty / (days - unavailable)
+            lost += rate * unavailable
+            adjusted.append((current, rate))
             current = next_month(current)
     elif sales:
         start = date.fromisoformat(data.get("history_start_date", min(s["date"] for s in sales)))
@@ -111,6 +134,18 @@ def history(data: Json, sku: str) -> tuple[list[Point], float, float, list[str],
             partial_rate = qty / (days - unavailable) if days > unavailable else None
             if partial_rate is not None:
                 lost += partial_rate * unavailable
+            else:
+                estimate = lost_month(adjusted, current, days)
+                if estimate is None:
+                    warnings.append(
+                        "Полный stockout: нет предыстории для оценки упущенного спроса."
+                    )
+                else:
+                    lost += estimate
+                    flags.append("stockout_adjustment")
+                    warnings.append(
+                        "Упущенный спрос при полном stockout оценён по прошлым периодам."
+                    )
             adjusted.append((current, partial_rate))
             current = next_month(current)
         if "history_start_date" not in data or "history_end_date" not in data:

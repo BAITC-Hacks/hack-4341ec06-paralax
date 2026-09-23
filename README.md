@@ -5,13 +5,23 @@ Hackathon team repository for Paralax
 
 # HackAlem AI — Автоматизация формирования заказов поставщикам
 
-> Статус: backend/API и расчёт IEK объединены. Срок поставки и страховой запас остаются сценарными параметрами, охват складов требует подтверждения. Текущие границы MVP зафиксированы в [спецификации](docs/spec.md).
+> Статус: UI, backend/API и расчёт IEK объединены. Срок поставки и страховой запас остаются сценарными параметрами, охват складов требует подтверждения. OpenAI-объяснения реализованы в расчётном модуле, но HTTP-маршрут пока возвращает резервный текст. Текущие границы MVP зафиксированы в [спецификации](docs/spec.md).
 >
 > Для начала работы: [правила команды](AGENTS.md) · [задачи и владельцы](docs/tasks.md) · [контракты](contracts/README.md) · [тестовые сценарии](fixtures/scenarios.md).
 
 ## Быстрый старт команды
 
-Полное ТЗ с видом экрана, API, распределением на троих и почасовыми этапами: [docs/spec.md](docs/spec.md). Индивидуальные задачи с проверяемым результатом: [docs/tasks.md](docs/tasks.md). Импорт IEK, расчёт, HTTP API и UI объединены; адаптер AI к HTTP остаётся отдельной задачей.
+**[Методология расчёта →](docs/methodology.md)** — четыре источника данных, обработка
+аномалий и дефицита, пять моделей, выбор по временной валидации, формула заказа,
+контрольные примеры, роль OpenAI и измеренные ограничения точности.
+
+Расчётная часть объединена с API: [команды запуска](docs/prediction-run.md),
+[карта четырёх входных книг IEK](docs/data-map.md), [методы и официальные источники](docs/prediction-design.md).
+Результат — JSON на 50 SKU. OpenAI подключён к объяснениям факторов; числовой
+прогноз воспроизводим и работает без API. Ограничения точности и данных указаны
+в инструкции запуска.
+
+Полное ТЗ с видом экрана, API, распределением на троих и почасовыми этапами: [docs/spec.md](docs/spec.md). Фактические статусы и владельцы: [docs/tasks.md](docs/tasks.md).
 
 ```powershell
 python -m venv .venv
@@ -22,7 +32,18 @@ cd ..
 .\.venv\Scripts\python.exe scripts/check.py
 ```
 
-На Linux/macOS используйте `.venv/bin/python` вместо `.venv\Scripts\python.exe`. `check` запускает Python format/lint/typecheck/pytest и frontend format/lint/typecheck/test/build. Приёмочные тесты расчёта выполняются без `xfail`. GitHub Actions выполняет те же проверки для push/PR.
+На Linux/macOS используйте `.venv/bin/python` вместо `.venv\Scripts\python.exe`.
+`check` запускает Python format/lint/typecheck/pytest и frontend format/lint/typecheck/test/build. Приёмочные тесты расчёта выполняются без `xfail`. GitHub Actions выполняет те же проверки для push/PR.
+
+Для проверки через ваш OpenAI API задайте ключ в локальном `.env` и выполните:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/check.py --live-openai
+```
+
+Команда дополнительно выполняет пять реальных платных запросов на синтетических
+сценариях. Ошибка API или fallback означает провал проверки. JSON-отчёт сохраняется
+в `outputs/mvp-live-check.json`; ключ и партнёрские Excel в API-проверку не попадают.
 
 Для локального просмотра UI запустите backend, затем `npm run dev --prefix frontend` и откройте `http://127.0.0.1:5173`. Исходные 12 Excel-книг IEK и Systeme Electric находятся в `data/` по указанию команды; `data/private/` и `data/raw/` остаются исключёнными. API-ключ в `.env` на серверной стороне; никогда не вводите его во frontend.
 
@@ -38,6 +59,11 @@ Invoke-RestMethod -Uri http://127.0.0.1:8000/api/planning-runs -Method Post -Con
 Для разработки интерфейса используйте синтетический [мок результата](fixtures/planning-result.demo.json). Готовый типизированный импорт — `planningDemo` из `frontend/src/mocks/planning-demo.generated.ts`, типы — `frontend/src/types/planning.generated.ts`. Источник типов — JSON Schema в `contracts/`; после её изменения выполните `npm run types:generate` в `frontend/`. Команда `check` проверит, что генерация не устарела и мок соответствует схеме.
 
 ## О проекте
+
+> [!NOTE]
+> Разделы ниже сохраняют исходное описание кейса и целевого продукта, включая ещё
+> не реализованные возможности. Фактический алгоритм и команды этой ветки описаны
+> в [методологии](docs/methodology.md) и [инструкции запуска](docs/prediction-run.md).
 
 Проект готовится для кейса ТОО «Электрокомплект» в рамках **HackAlem AI**.
 
