@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/BAITC-Hacks/hack-4341ec06-paralax/contracts/planning-result.schema.json",
+  "title": "PlanningResult",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["run_id", "as_of_date", "warehouse_id", "status", "recommendations"],
+  "properties": {
+    "run_id": {"type": "string", "minLength": 1},
+    "as_of_date": {"type": "string", "format": "date"},
+    "warehouse_id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["draft", "approved"]},
+    "recommendations": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/recommendation"}
+    }
+  },
+  "$defs": {
+    "recommendation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sku", "supplier_id", "recommended_quantity", "selected_quantity", "urgency", "factors", "reason", "flags"],
+      "properties": {
+        "sku": {"type": "string", "minLength": 1},
+        "supplier_id": {"type": "string", "minLength": 1},
+        "recommended_quantity": {"type": "integer", "minimum": 0},
+        "selected_quantity": {"type": "integer", "minimum": 0},
+        "urgency": {"enum": ["critical", "high", "medium", "low"]},
+        "factors": {"$ref": "#/$defs/factors"},
+        "reason": {"type": "string", "minLength": 1},
+        "flags": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"enum": ["one_off_sale", "stockout_adjustment", "seasonality", "growth", "short_history", "missing_data"]}
+        }
+      }
+    },
+    "factors": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["regular_daily_demand", "seasonality_multiplier", "trend_multiplier", "external_growth_multiplier", "estimated_lost_demand", "coverage_days", "forecast_during_coverage", "safety_stock", "current_stock", "goods_in_transit"],
+      "properties": {
+        "regular_daily_demand": {"type": "number", "minimum": 0},
+        "seasonality_multiplier": {"type": "number", "minimum": 0},
+        "trend_multiplier": {"type": "number", "minimum": 0},
+        "external_growth_multiplier": {"type": "number", "minimum": 0},
+        "estimated_lost_demand": {"type": "number", "minimum": 0},
+        "coverage_days": {"type": "integer", "minimum": 1},
+        "forecast_during_coverage": {"type": "number", "minimum": 0},
+        "safety_stock": {"type": "number", "minimum": 0},
+        "current_stock": {"type": "integer", "minimum": 0},
+        "goods_in_transit": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

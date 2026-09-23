@@ -1,0 +1,18 @@
+# Local secrets and environments
+.env
+.env.*
+!.env.example
+.venv/
+node_modules/
+__pycache__/
+*.pyc
+
+# Generated outputs and private partner data
+dist/
+build/
+coverage/
+data/private/
+data/raw/
+uploads/
+*.sqlite
+*.sqlite3
