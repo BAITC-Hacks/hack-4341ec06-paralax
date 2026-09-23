@@ -22,7 +22,7 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = ["backend"]
+packages = ["backend", "backend.importers"]
 
 [tool.ruff]
 line-length = 100
