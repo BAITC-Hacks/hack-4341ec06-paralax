@@ -4,6 +4,12 @@
 !.env.example
 .venv/
 node_modules/
+.npm-cache*/
+.pip-cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
 __pycache__/
 *.pyc
 
@@ -13,6 +19,7 @@ build/
 coverage/
 data/private/
 data/raw/
+data/
 uploads/
 *.sqlite
 *.sqlite3

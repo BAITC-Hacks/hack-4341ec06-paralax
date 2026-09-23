@@ -7,6 +7,23 @@ Hackathon team repository for Paralax
 >
 > Для начала работы: [правила команды](AGENTS.md) · [задачи и владельцы](docs/tasks.md) · [контракты](contracts/README.md) · [тестовые сценарии](fixtures/scenarios.md).
 
+## Быстрый старт команды
+
+Полное ТЗ с видом экрана, API, распределением на троих и почасовыми этапами: [docs/spec.md](docs/spec.md). Индивидуальные задачи с проверяемым результатом: [docs/tasks.md](docs/tasks.md). Сейчас есть только каркас приложения и проверок; импорт, расчёт, API и рабочий UI будут реализованы в личных ветках участников.
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
+cd frontend
+npm ci
+cd ..
+.\.venv\Scripts\python.exe scripts/check.py
+```
+
+На Linux/macOS используйте `.venv/bin/python` вместо `.venv\Scripts\python.exe`. `check` запускает Python format/lint/typecheck/pytest и frontend format/lint/typecheck/test/build. Пять приёмочных тестов помечены `xfail` до появления расчётного модуля; их нельзя считать реализованными функциями. После появления функции снимайте метку с соответствующего теста и добивайтесь зелёного результата. GitHub Actions выполняет те же проверки для push/PR.
+
+Для локального просмотра пустого UI-каркаса: `npm run dev --prefix frontend`. Реальные Excel лежат только локально в `data/`, эта папка исключена из Git. API-ключ в `.env` на серверной стороне; никогда не вводите его во frontend.
+
 ## О проекте
 
 Проект готовится для кейса ТОО «Электрокомплект» в рамках **HackAlem AI**.
