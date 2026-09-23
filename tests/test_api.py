@@ -7,6 +7,7 @@ import io
 import json
 from copy import deepcopy
 from pathlib import Path
+from typing import Any
 
 from fastapi.testclient import TestClient
 
@@ -20,7 +21,8 @@ def fixture(name: str) -> dict:
     return json.loads((ROOT / "fixtures" / name).read_text(encoding="utf-8"))
 
 
-def test_demo_review_approval_explanation_and_export() -> None:
+def test_demo_review_approval_explanation_and_export(monkeypatch: Any) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "")
     with TestClient(create_app()) as client:
         response = client.post("/api/demo/planning-runs")
         assert response.status_code == 201
@@ -61,6 +63,31 @@ def test_demo_review_approval_explanation_and_export() -> None:
         assert cable["recommended_quantity"] == "25"
         assert cable["selected_quantity"] == "31"
         assert cable["status"] == "approved"
+
+
+def test_default_http_explanation_uses_backend_ai(monkeypatch: Any) -> None:
+    received: list[str] = []
+
+    def fake_explain(row: dict[str, Any], *, data_source: str) -> dict[str, Any]:
+        received.append(data_source)
+        return {
+            "summary": f"Заказ {row['recommended_quantity']} шт.",
+            "drivers": ["Учтён прогноз."],
+            "risk": "Проверьте остаток.",
+            "review_question": "Подтверждаете?",
+            "evidence_keys": ["forecast_during_coverage"],
+            "fallback": False,
+        }
+
+    monkeypatch.setattr("backend.ai.explain", fake_explain)
+    with TestClient(create_app()) as client:
+        run = client.post("/api/demo/planning-runs").json()
+        response = client.post(
+            f"/api/planning-runs/{run['run_id']}/recommendations/CABLE-01/explanation"
+        )
+        assert response.status_code == 200
+        assert response.json()["source"] == "openai"
+        assert received == ["synthetic"]
 
 
 def test_real_run_validates_input_and_uses_injected_planner() -> None:
