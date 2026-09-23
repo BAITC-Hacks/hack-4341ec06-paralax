@@ -16,3 +16,4 @@ data/raw/
 uploads/
 *.sqlite
 *.sqlite3
+.analysis/
