@@ -23,10 +23,17 @@ def test_schema_is_valid(name: str) -> None:
     jsonschema.Draft202012Validator.check_schema(schema)
 
 
-@pytest.mark.parametrize("name", ["planning-input", "planning-result"])
-def test_fixture_matches_schema(name: str) -> None:
-    schema = load_json(CONTRACTS / f"{name}.schema.json")
-    fixture = load_json(FIXTURES / f"{name}.sample.json")
+@pytest.mark.parametrize(
+    ("schema_name", "fixture_name"),
+    [
+        ("planning-input", "planning-input.sample"),
+        ("planning-result", "planning-result.sample"),
+        ("planning-result", "planning-result.demo"),
+    ],
+)
+def test_fixture_matches_schema(schema_name: str, fixture_name: str) -> None:
+    schema = load_json(CONTRACTS / f"{schema_name}.schema.json")
+    fixture = load_json(FIXTURES / f"{fixture_name}.json")
     jsonschema.Draft202012Validator(schema, format_checker=jsonschema.FormatChecker()).validate(
         fixture
     )

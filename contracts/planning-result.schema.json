@@ -4,11 +4,12 @@
   "title": "PlanningResult",
   "type": "object",
   "additionalProperties": false,
-  "required": ["run_id", "as_of_date", "warehouse_id", "status", "recommendations"],
+  "required": ["run_id", "as_of_date", "warehouse_id", "data_source", "status", "recommendations"],
   "properties": {
     "run_id": {"type": "string", "minLength": 1},
     "as_of_date": {"type": "string", "format": "date"},
     "warehouse_id": {"type": "string", "minLength": 1},
+    "data_source": {"enum": ["synthetic", "partner_excel"]},
     "status": {"enum": ["draft", "approved"]},
     "recommendations": {
       "type": "array",
@@ -19,10 +20,13 @@
     "recommendation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["sku", "supplier_id", "recommended_quantity", "selected_quantity", "urgency", "factors", "reason", "flags"],
+      "required": ["sku", "name", "category", "supplier_id", "supplier_name", "recommended_quantity", "selected_quantity", "urgency", "factors", "reason", "flags"],
       "properties": {
         "sku": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "category": {"type": "string", "minLength": 1},
         "supplier_id": {"type": "string", "minLength": 1},
+        "supplier_name": {"type": "string", "minLength": 1},
         "recommended_quantity": {"type": "integer", "minimum": 0},
         "selected_quantity": {"type": "integer", "minimum": 0},
         "urgency": {"enum": ["critical", "high", "medium", "low"]},
@@ -31,7 +35,7 @@
         "flags": {
           "type": "array",
           "uniqueItems": true,
-          "items": {"enum": ["one_off_sale", "stockout_adjustment", "seasonality", "growth", "short_history", "missing_data"]}
+          "items": {"enum": ["one_off_sale", "stockout_adjustment", "suspected_stockout", "seasonality", "growth", "short_history", "missing_data"]}
         }
       }
     },
@@ -49,7 +53,9 @@
         "forecast_during_coverage": {"type": "number", "minimum": 0},
         "safety_stock": {"type": "number", "minimum": 0},
         "current_stock": {"type": "integer", "minimum": 0},
-        "goods_in_transit": {"type": "integer", "minimum": 0}
+        "goods_in_transit": {"type": "integer", "minimum": 0},
+        "stock_as_of_date": {"type": "string", "format": "date"},
+        "stock_source": {"type": "string", "minLength": 1}
       }
     }
   }

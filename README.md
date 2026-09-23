@@ -24,6 +24,8 @@ cd ..
 
 Для локального просмотра пустого UI-каркаса: `npm run dev --prefix frontend`. Исходные 12 Excel-книг IEK и Systeme Electric находятся в `data/` по указанию команды; `data/private/` и `data/raw/` остаются исключёнными. API-ключ в `.env` на серверной стороне; никогда не вводите его во frontend.
 
+Для разработки интерфейса используйте синтетический [мок результата](fixtures/planning-result.demo.json). Готовый типизированный импорт — `planningDemo` из `frontend/src/mocks/planning-demo.generated.ts`, типы — `frontend/src/types/planning.generated.ts`. Источник типов — JSON Schema в `contracts/`; после её изменения выполните `npm run types:generate` в `frontend/`. Команда `check` проверит, что генерация не устарела и мок соответствует схеме.
+
 ## О проекте
 
 Проект готовится для кейса ТОО «Электрокомплект» в рамках **HackAlem AI**.
